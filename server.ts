@@ -30,9 +30,9 @@ async function startServer() {
     next();
   });
 
-  // AI Generation with Gemini (Server-side to keep API Key secure)
-  app.post("/api/generate", async (req, res) => {
-    const { prompt, image, mimeType, model, config } = req.body;
+  // Unified Gemini API Endpoint
+  app.post("/api/gemini", async (req, res) => {
+    const { action, prompt, image, mimeType, config } = req.body;
     
     if (!process.env.GEMINI_API_KEY) {
       return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server" });
@@ -40,45 +40,35 @@ async function startServer() {
 
     try {
       const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      // @ts-ignore - Using experimental image generation model
-      const result = await genAI.models.generateContent({
-        model: model || 'gemini-3.1-flash-image-preview',
-        contents: {
-          parts: [
-            { inlineData: { data: image, mimeType: mimeType || "image/jpeg" } },
-            { text: prompt },
-          ],
-        },
-        config: config
-      });
-
-      res.json(result);
+      
+      if (action === 'analyze') {
+        const result = await genAI.models.generateContent({
+          model: "gemini-3-flash-preview",
+          contents: {
+            parts: [
+              { inlineData: { data: image, mimeType: mimeType || "image/jpeg" } },
+              { text: prompt }
+            ]
+          }
+        });
+        res.json({ text: result.text });
+      } else {
+        // @ts-ignore - Using experimental image generation model
+        const result = await genAI.models.generateContent({
+          model: 'gemini-3.1-flash-image-preview',
+          contents: {
+            parts: [
+              { inlineData: { data: image, mimeType: mimeType || "image/jpeg" } },
+              { text: prompt },
+            ],
+          },
+          config: config
+        });
+        res.json(result);
+      }
     } catch (error: any) {
-      console.error("AI Generation failed:", error);
-      res.status(500).json({ error: error.message || "Failed to generate content" });
-    }
-  });
-
-  // Analysis endpoint (optional, if needed by App.tsx)
-  app.post("/api/analyze", async (req, res) => {
-    const { prompt, image, mimeType } = req.body;
-    if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: "API Key missing" });
-
-    try {
-      const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const result = await genAI.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: {
-          parts: [
-            { inlineData: { data: image, mimeType: mimeType || "image/jpeg" } },
-            { text: prompt }
-          ]
-        }
-      });
-      res.json({ text: result.text });
-    } catch (error: any) {
-      console.error("Analysis failed:", error);
-      res.status(500).json({ error: error.message });
+      console.error("Gemini action failed:", error);
+      res.status(500).json({ error: error.message || "AI Service Error" });
     }
   });
 

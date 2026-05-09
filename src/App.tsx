@@ -350,10 +350,11 @@ export default function App() {
       // Use flash model for fast analysis (performed on server)
       const prompt = "请分析这张产品图片，并提供一个简洁吸引人的标题（10字以内）和一段简短的产品介绍（20字以内）。请严格以纯JSON格式返回，不要包含任何Markdown标记或多余文字，结构如下：{\"title\": \"...\", \"description\": \"...\"}。语言为中文。";
 
-      const res = await fetch('/api/analyze', {
+      const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'analyze',
           prompt,
           image: base64Data,
           mimeType
@@ -445,14 +446,14 @@ export default function App() {
       const base64Data = uploadedImage.split(',')[1];
       const mimeType = uploadedImage.split(';')[0].split(':')[1];
 
-      const res = await fetch('/api/generate', {
+      const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'generate',
           prompt,
           image: base64Data,
           mimeType,
-          model: 'gemini-3.1-flash-image-preview',
           config: {
             imageConfig: {
               aspectRatio: ASPECT_RATIOS[aspectRatio],
