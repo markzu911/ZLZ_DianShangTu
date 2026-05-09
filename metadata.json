@@ -1,0 +1,8 @@
+{
+  "name": "GenArt Pro: AI 商业海报生成器",
+  "description": "多方案 AI 商业海报生成引擎。支持美妆、家居、食品等多品类，集成专业商业摄影风格与极致细节还原技术。",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}
