@@ -94,6 +94,11 @@ async function startServer() {
   app.post("/api/tool/verify", (req, res) => proxyRequest(req, res, "/api/tool/verify"));
   app.post("/api/tool/consume", (req, res) => proxyRequest(req, res, "/api/tool/consume"));
 
+  // Image Upload and Persistence Endpoints (Forwarded to SaaS Backend)
+  app.post("/api/upload/image", (req, res) => proxyRequest(req, res, "/api/upload/image"));
+  app.post("/api/upload/direct-token", (req, res) => proxyRequest(req, res, "/api/upload/direct-token"));
+  app.post("/api/upload/commit", (req, res) => proxyRequest(req, res, "/api/upload/commit"));
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

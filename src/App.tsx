@@ -507,6 +507,21 @@ export default function App() {
             const consumeResult = await consumeRes.json();
             if (consumeResult.success) {
               setSaasInfo(prev => prev ? { ...prev, userIntegral: consumeResult.data.currentIntegral } : null);
+              
+              // Persist the generated image to SaaS backend (UserImage table)
+              try {
+                await fetch('/api/upload/image', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId: saasInfo.userId,
+                    base64: imageUrl,
+                    source: 'result'
+                  })
+                });
+              } catch (uploadErr) {
+                console.error('Image persistence failed:', uploadErr);
+              }
             }
           } catch (err) {
             console.error('Consumption failed:', err);
