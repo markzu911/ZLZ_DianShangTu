@@ -844,47 +844,30 @@ export default function App() {
 
                     {/* Style & Config */}
                     <section>
-                      <label className="block text-sm font-bold text-slate-700 mb-4">生成风格 (点击预览参照图)</label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      <label className="block text-sm font-bold text-slate-700 mb-4">生成风格</label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {currentStyles.map((s) => (
                           <button
                             key={s.id}
                             onClick={() => setActiveStyleId(s.id)}
-                            className={`group relative flex flex-col p-2 rounded-2xl border-2 transition-all overflow-hidden ${
+                            className={`group relative flex items-center justify-center py-4 px-3 rounded-xl border-2 transition-all ${
                               activeStyleId === s.id 
                               ? 'border-indigo-600 bg-indigo-50 shadow-md ring-4 ring-indigo-500/10' 
                               : 'border-slate-100 bg-white hover:border-slate-200'
                             }`}
                           >
-                            <div className="aspect-[4/3] rounded-xl overflow-hidden mb-3 bg-slate-50 relative">
-                              {s.preview ? (
-                                <img 
-                                  src={s.preview} 
-                                  alt={s.name} 
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                  onError={(e) => {
-                                    // Fallback if image not found
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                  <ImageIcon className="w-6 h-6" />
-                                </div>
-                              )}
-                              {activeStyleId === s.id && (
-                                <div className="absolute inset-0 bg-indigo-600/10 flex items-center justify-center">
-                                  <div className="bg-white rounded-full p-1.5 shadow-lg">
-                                    <Check className="w-4 h-4 text-indigo-600" />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            <span className={`text-[10px] font-black uppercase tracking-widest pb-1 transition-colors ${
-                              activeStyleId === s.id ? 'text-indigo-700' : 'text-slate-400'
+                            <span className={`text-[11px] font-black uppercase tracking-widest transition-colors text-center ${
+                              activeStyleId === s.id ? 'text-indigo-700' : 'text-slate-500'
                             }`}>
                               {s.name}
                             </span>
+                            {activeStyleId === s.id && (
+                              <div className="absolute top-1 right-1">
+                                <div className="bg-indigo-600 rounded-full p-0.5 shadow-sm">
+                                  <Check className="w-2 h-2 text-white" />
+                                </div>
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
