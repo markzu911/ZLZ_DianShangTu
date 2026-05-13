@@ -622,49 +622,8 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12 md:py-20">
-        {/* Banner Option */}
-        {step === 1 && (
-          <div className="mb-20 text-center space-y-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="inline-block px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black uppercase tracking-[0.2em] mb-4"
-            >
-              Powered by Gemini 3.1 Pro
-            </motion.div>
-            <h2 className="text-5xl md:text-7xl font-black tracking-tight text-[#1a1a1a] max-w-4xl mx-auto leading-[0.95]">
-              重塑您的<span className="text-indigo-600">电商产品</span>宣传视觉
-            </h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto font-medium">
-              无论是金属力量的磅礴，还是极简家居的高级。瞬间将产品原图转化为殿堂级商业大片。
-            </p>
-          </div>
-        )}
+      <main className="max-w-7xl mx-auto px-6 py-12 md:py-20 text-slate-900">
 
-        {/* Progress Bar */}
-        <div className="max-w-sm mx-auto mb-16 px-4">
-          <div className="flex items-center justify-between relative">
-            {[1, 2, 3].map((num) => (
-              <div 
-                key={num} 
-                className={`z-10 flex items-center justify-center w-4 h-4 rounded-full transition-all duration-700 ${
-                  step >= num ? 'bg-indigo-600 scale-150 shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-[#e9e4db]'
-                }`}
-              />
-            ))}
-            <div className="absolute top-1/2 left-0 w-full h-[1px] bg-[#e9e4db] -translate-y-1/2 -z-0"></div>
-            <div 
-              className="absolute top-1/2 left-0 h-[1px] bg-indigo-600 -translate-y-1/2 transition-all duration-700 -z-0"
-              style={{ width: `${((step - 1) / 2) * 100}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between mt-6 px-1 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            <span>1. 类别</span>
-            <span>2. 构思</span>
-            <span>3. 成品</span>
-          </div>
-        </div>
 
         {/* Step Content */}
         <div className="relative">
@@ -676,7 +635,7 @@ export default function App() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="grid grid-cols-1 md:grid-cols-3 gap-10"
+                className="grid grid-cols-3 gap-8"
               >
                 {CATEGORIES.map((cat) => (
                   <button
@@ -685,13 +644,13 @@ export default function App() {
                       setSelectedCategory(cat.id as Category);
                       setStep(2);
                     }}
-                    className="group relative flex flex-col items-center text-center transition-all bg-white p-12 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] border border-[#e9e4db] hover:shadow-[0_45px_80px_-20px_rgba(0,0,0,0.1)] hover:-translate-y-3 cursor-pointer"
+                    className="group relative flex flex-col items-center text-center transition-all bg-white p-8 rounded-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] border border-[#e9e4db] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] hover:-translate-y-2 cursor-pointer"
                   >
-                    <div className={`mb-8 p-6 rounded-[1.5rem] ${cat.color} group-hover:scale-110 transition-all duration-500`}>
-                      <cat.icon className="w-10 h-10" />
+                    <div className={`mb-6 p-5 rounded-2xl ${cat.color} group-hover:scale-110 transition-all duration-500`}>
+                      <cat.icon className="w-8 h-8" />
                     </div>
-                    <h3 className="text-2xl font-black tracking-tight mb-3 text-[#1a1a1a]">{cat.name}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed mb-8 px-4 font-medium">定制化生成顶级商业视觉方案。</p>
+                    <h3 className="text-xl font-black tracking-tight mb-2 text-[#1a1a1a]">{cat.name}</h3>
+                    <p className="text-slate-400 text-xs leading-relaxed mb-6 px-2 font-medium">定制化生成顶级商业视觉方案。</p>
                     <div className="mt-auto flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 group-hover:gap-4 transition-all">
                       Select Category <ChevronRight className="w-4 h-4" />
                     </div>
@@ -789,28 +748,26 @@ export default function App() {
                       <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4 text-indigo-500" /> 第二步：选择产品细分
                       </label>
-                      <div className="space-y-4">
-                        <div className="flex flex-col gap-3">
-                          {Object.keys(SUB_CATEGORIES[selectedCategory!]).map((group) => (
-                            <button
-                              key={group}
-                              onClick={() => {
-                                setSelectedSubCategoryGroup(group);
-                                setSelectedProduct(group);
-                              }}
-                              className={`px-6 py-4 rounded-2xl text-left transition-all border-2 ${
-                                selectedSubCategoryGroup === group 
-                                ? 'bg-[#1a1a1a] text-white border-[#1a1a1a] shadow-xl shadow-black/10 scale-[1.01]' 
-                                : 'bg-slate-50 text-slate-600 border-transparent hover:border-slate-200'
-                              }`}
-                            >
-                              <div className="font-bold text-base">{group}</div>
-                              <div className={`text-xs mt-1 opacity-70 ${selectedSubCategoryGroup === group ? 'text-slate-400' : 'text-slate-400'}`}>
-                                ({SUB_CATEGORIES[selectedCategory!][group].join('、')})
-                              </div>
-                            </button>
-                          ))}
-                        </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        {Object.keys(SUB_CATEGORIES[selectedCategory!]).map((group) => (
+                          <button
+                            key={group}
+                            onClick={() => {
+                              setSelectedSubCategoryGroup(group);
+                              setSelectedProduct(group);
+                            }}
+                            className={`px-4 py-4 rounded-xl text-left transition-all border-2 flex flex-col justify-between ${
+                              selectedSubCategoryGroup === group 
+                              ? 'bg-[#1a1a1a] text-white border-[#1a1a1a] shadow-lg scale-[1.02]' 
+                              : 'bg-slate-50 text-slate-600 border-transparent hover:border-slate-200'
+                            }`}
+                          >
+                            <div className="font-bold text-sm tracking-tight">{group}</div>
+                            <div className={`text-[10px] mt-2 leading-tight opacity-60`}>
+                              {SUB_CATEGORIES[selectedCategory!][group].slice(0, 3).join('、')}{SUB_CATEGORIES[selectedCategory!][group].length > 3 ? '...' : ''}
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     </section>
 
