@@ -357,7 +357,9 @@ export default function App() {
           action: 'analyze',
           prompt,
           image: base64Data,
-          mimeType
+          mimeType,
+          userId: saasInfo?.userId,
+          toolId: saasInfo?.toolId
         })
       });
 
@@ -454,6 +456,8 @@ export default function App() {
           prompt,
           image: base64Data,
           mimeType,
+          userId: saasInfo?.userId,
+          toolId: saasInfo?.toolId,
           config: {
             imageConfig: {
               aspectRatio: ASPECT_RATIOS[aspectRatio],
@@ -496,36 +500,11 @@ export default function App() {
         setStep(1); // Reset to base step or keep view clean
         setViewHistory(true);
 
-        // SaaS Consumption
-        if (saasInfo) {
-          try {
-            const consumeRes = await fetch('/api/tool/consume', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: saasInfo.userId, toolId: saasInfo.toolId })
-            });
-            const consumeResult = await consumeRes.json();
-            if (consumeResult.success) {
-              setSaasInfo(prev => prev ? { ...prev, userIntegral: consumeResult.data.currentIntegral } : null);
-              
-              // Persist the generated image to SaaS backend (UserImage table)
-              try {
-                await fetch('/api/upload/image', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    userId: saasInfo.userId,
-                    base64: imageUrl,
-                    source: 'result'
-                  })
-                });
-              } catch (uploadErr) {
-                console.error('Image persistence failed:', uploadErr);
-              }
-            }
-          } catch (err) {
-            console.error('Consumption failed:', err);
-          }
+        // Update local integral if server returned it after auto-consumption
+        if (result._saas?.success && saasInfo) {
+          // Note: SaaS commit response structure might vary, but usually contains user data or tool used stats
+          // For now, we trust the server handled it. We can re-fetch launch if needed or update locally.
+          // If commitRes.data.image was returned, we could use that URL too.
         }
       } else {
         throw new Error('未能生成图像，请检查模型响应');

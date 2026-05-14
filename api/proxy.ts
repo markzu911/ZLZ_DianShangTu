@@ -39,6 +39,47 @@ const proxyRequest = async (req: express.Request, res: express.Response, targetP
   }
 };
 
+// Internal SaaS call helper
+const saasCall = async (method: string, path: string, data?: any) => {
+  return await axios({
+    method,
+    url: `http://aibigtree.com${path}`,
+    data,
+    headers: { 'Content-Type': 'application/json' }
+  });
+};
+
+async function saveResultToSaas(userId: string, toolId: string, base64: string) {
+  try {
+    const buffer = Buffer.from(base64, 'base64');
+    
+    // 1. Consume
+    await saasCall('POST', '/api/tool/consume', { userId, toolId });
+    
+    // 2. Apply for direct token
+    const tokenRes = await saasCall('POST', '/api/upload/direct-token', {
+      userId, toolId, source: 'result', mimeType: 'image/png', fileSize: buffer.length
+    });
+    
+    if (!tokenRes.data.success) throw new Error(tokenRes.data.error || "Failed to get upload token");
+
+    // 3. PUT to OSS
+    await axios.put(tokenRes.data.uploadUrl, buffer, {
+      headers: { 'Content-Type': 'image/png' }
+    });
+
+    // 4. Commit
+    const commitRes = await saasCall('POST', '/api/upload/commit', {
+      userId, toolId, source: 'result', objectKey: tokenRes.data.objectKey, fileSize: buffer.length
+    });
+
+    return commitRes.data;
+  } catch (err: any) {
+    console.error("Standard image saving failed:", err.message);
+    throw err;
+  }
+}
+
 app.post("/api/tool/launch", (req, res) => proxyRequest(req, res, "/api/tool/launch"));
 app.post("/api/tool/verify", (req, res) => proxyRequest(req, res, "/api/tool/verify"));
 app.post("/api/tool/consume", (req, res) => proxyRequest(req, res, "/api/tool/consume"));
@@ -50,7 +91,7 @@ app.post("/api/upload/commit", (req, res) => proxyRequest(req, res, "/api/upload
 
 // Unified Gemini API Endpoint
 app.post("/api/gemini", async (req, res) => {
-  const { action, prompt, image, mimeType, config } = req.body;
+  const { action, prompt, image, mimeType, config, userId, toolId } = req.body;
   
   if (!process.env.GEMINI_API_KEY) {
     return res.status(500).json({ error: "GEMINI_API_KEY is not configured on the server" });
@@ -72,7 +113,7 @@ app.post("/api/gemini", async (req, res) => {
       });
       res.json({ text: result.text });
     } else {
-      // Default to image generation (gemini-3.1-flash-image-preview)
+      // Image generation (gemini-3.1-flash-image-preview)
       const result = await genAI.models.generateContent({
         model: 'gemini-3.1-flash-image-preview',
         contents: {
@@ -83,6 +124,30 @@ app.post("/api/gemini", async (req, res) => {
         },
         config: config
       });
+
+      // Extract result base64
+      let b64 = null;
+      const parts = result.candidates?.[0]?.content?.parts;
+      if (parts) {
+        for (const part of parts) {
+          if (part.inlineData) {
+            b64 = part.inlineData.data;
+            break;
+          }
+        }
+      }
+
+      // Standard Result Preservation (if SaaS IDs are provided)
+      if (b64 && userId && toolId && userId !== 'null' && toolId !== 'null') {
+        try {
+          const saasResult = await saveResultToSaas(userId, toolId, b64);
+          // @ts-ignore
+          result._saas = saasResult;
+        } catch (saasErr) {
+          console.error("Auto-saving to SaaS failed, but returning image anyway");
+        }
+      }
+
       res.json(result);
     }
   } catch (error: any) {
