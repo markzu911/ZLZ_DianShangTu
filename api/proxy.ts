@@ -54,7 +54,11 @@ async function saveResultToSaas(userId: string, toolId: string, base64: string) 
     const buffer = Buffer.from(base64, 'base64');
     
     // 1. Consume
-    await saasCall('POST', '/api/tool/consume', { userId, toolId });
+    try {
+      await saasCall('POST', '/api/tool/consume', { userId, toolId });
+    } catch (e: any) {
+      console.warn("SaaS Consume failed, continuing anyway:", e.message);
+    }
     
     // 2. Apply for direct token
     const tokenRes = await saasCall('POST', '/api/upload/direct-token', {

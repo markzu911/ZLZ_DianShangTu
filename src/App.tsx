@@ -248,6 +248,24 @@ export default function App() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // --- Helpers ---
+  const readJsonResponse = async (res: Response) => {
+    const text = await res.text();
+    let data: any = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      // Handle cases where the response is HTML (e.g., 504 Timeout or 404)
+      data = { error: text.length > 200 ? text.slice(0, 200) + '...' : text || `HTTP Error ${res.status}` };
+    }
+
+    if (!res.ok || data.success === false) {
+      throw new Error(data.error || data.message || `请求失败 (${res.status})`);
+    }
+
+    return data;
+  };
+
   // SaaS Initialization
   useEffect(() => {
     const handleMessage = async (event: MessageEvent) => {
@@ -363,8 +381,7 @@ export default function App() {
         })
       });
 
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
+      const result = await readJsonResponse(res);
 
       let text = result.text?.trim() || "";
       
@@ -467,8 +484,7 @@ export default function App() {
         })
       });
 
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
+      const result = await readJsonResponse(res);
       
       let b64 = null;
       const parts = result.candidates?.[0]?.content?.parts;
