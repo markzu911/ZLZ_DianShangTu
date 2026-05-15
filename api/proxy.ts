@@ -39,49 +39,46 @@ const proxyRequest = async (req: express.Request, res: express.Response, targetP
   }
 };
 
-// Internal SaaS call helper
+// Internal SaaS call helper with timeout
 const saasCall = async (method: string, path: string, data?: any) => {
   return await axios({
     method,
     url: `http://aibigtree.com${path}`,
     data,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 15000 // 15s timeout for SaaS metadata calls
   });
 };
 
 async function saveResultToSaas(userId: string, toolId: string, base64: string) {
+  const buffer = Buffer.from(base64, 'base64');
+  
+  // 1. Consume
   try {
-    const buffer = Buffer.from(base64, 'base64');
-    
-    // 1. Consume
-    try {
-      await saasCall('POST', '/api/tool/consume', { userId, toolId });
-    } catch (e: any) {
-      console.warn("SaaS Consume failed, continuing anyway:", e.message);
-    }
-    
-    // 2. Apply for direct token
-    const tokenRes = await saasCall('POST', '/api/upload/direct-token', {
-      userId, toolId, source: 'result', mimeType: 'image/png', fileSize: buffer.length
-    });
-    
-    if (!tokenRes.data.success) throw new Error(tokenRes.data.error || "Failed to get upload token");
-
-    // 3. PUT to OSS
-    await axios.put(tokenRes.data.uploadUrl, buffer, {
-      headers: { 'Content-Type': 'image/png' }
-    });
-
-    // 4. Commit
-    const commitRes = await saasCall('POST', '/api/upload/commit', {
-      userId, toolId, source: 'result', objectKey: tokenRes.data.objectKey, fileSize: buffer.length
-    });
-
-    return commitRes.data;
-  } catch (err: any) {
-    console.error("Standard image saving failed:", err.message);
-    throw err;
+    await saasCall('POST', '/api/tool/consume', { userId, toolId });
+  } catch (e: any) {
+    console.warn("SaaS Consume failed:", e.message);
   }
+  
+  // 2. Apply for direct token
+  const tokenRes = await saasCall('POST', '/api/upload/direct-token', {
+    userId, toolId, source: 'result', mimeType: 'image/png', fileSize: buffer.length
+  });
+  
+  if (!tokenRes.data.success) throw new Error(tokenRes.data.error || "Failed to get upload token");
+
+  // 3. PUT to OSS (with longer timeout for large files)
+  await axios.put(tokenRes.data.uploadUrl, buffer, {
+    headers: { 'Content-Type': 'image/png' },
+    timeout: 30000 // 30s timeout for raw image upload
+  });
+
+  // 4. Commit
+  const commitRes = await saasCall('POST', '/api/upload/commit', {
+    userId, toolId, source: 'result', objectKey: tokenRes.data.objectKey, fileSize: buffer.length
+  });
+
+  return commitRes.data;
 }
 
 app.post("/api/tool/launch", (req, res) => proxyRequest(req, res, "/api/tool/launch"));
